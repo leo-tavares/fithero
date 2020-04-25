@@ -1,7 +1,12 @@
 /* @flow */
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useLayoutEffect,
+} from 'react';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { Paragraph, Caption, Title } from 'react-native-paper';
 import { exercises } from 'fithero-exercises';
 import memoize from 'lodash/memoize';
@@ -16,49 +21,54 @@ import { getExerciseMuscleName, getExerciseName } from '../../utils/exercises';
 import i18n from '../../utils/i18n';
 import HeaderIconButton from '../../components/Header/HeaderIconButton';
 import HeaderOverflowButton from '../../components/Header/HeaderOverflowButton';
-import type { NavigationType } from '../../types';
 import DeleteWarningDialog from '../../components/DeleteWarningDialog';
 import Screen from '../../components/Screen';
-import type { AppThemeType } from '../../redux/modules/settings';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
 import useRealmResultsHook from '../../hooks/useRealmResultsHook';
+import type { NavigationType } from '../../types';
 
 const getExercise = memoize(id => exercises.find(e => e.id === id));
 
-type NavigationObjectType = {
-  navigation: NavigationType<{
-    id: string,
-    editAction: () => void,
-    deleteAction: (i: number) => void,
-  }>,
-};
-
-type NavigationOptions = NavigationObjectType & {
-  screenProps: {
-    theme: AppThemeType,
+type Props = {
+  navigation: NavigationType,
+  route: {
+    params: {
+      id: string,
+      editAction: () => void,
+      deleteAction: (i: number) => void,
+    },
   },
 };
 
-type Props = NavigationObjectType & {};
-
 const ExerciseDetailsScreen = (props: Props) => {
   const { navigation } = props;
-  const { params = {} } = props.navigation.state;
+  const { params = {} } = props.route;
   const id = params.id;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    navigation.setParams({
-      editAction: () => {
-        navigation.navigate('EditExercise', {
-          id,
-        });
-      },
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        isCustomExercise(params.id) ? (
+          <View style={styles.header}>
+            <HeaderIconButton
+              onPress={() =>
+                navigation.navigate('EditExercise', {
+                  id,
+                })
+              }
+              icon={Platform.OS === 'ios' ? 'edit' : 'pencil'}
+            />
+            <HeaderOverflowButton
+              onPress={() => setShowDeleteDialog(true)}
+              actions={[i18n.t('delete')]}
+              destructiveButtonIndex={1}
+              last
+            />
+          </View>
+        ) : undefined, // eslint-disable-line prettier/prettier
     });
-    navigation.setParams({ deleteAction: () => setShowDeleteDialog(true) });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id, navigation, params]);
 
   useEffect(() => {
     if (isDeleting) {
@@ -128,34 +138,7 @@ const ExerciseDetailsScreen = (props: Props) => {
   );
 };
 
-ExerciseDetailsScreen.navigationOptions = ({
-  navigation,
-  screenProps,
-}: NavigationOptions) => {
-  const { params = {} } = navigation.state;
-
-  return {
-    ...getDefaultNavigationOptions(screenProps.theme),
-    headerRight: isCustomExercise(params.id) ? (
-      <View style={styles.toolbarActions}>
-        <HeaderIconButton onPress={() => params.editAction()} icon="edit" />
-        <HeaderOverflowButton
-          onPress={i => params.deleteAction(i)}
-          actions={[i18n.t('delete')]}
-          destructiveButtonIndex={1}
-          last
-        />
-      </View>
-    ) : (
-      undefined
-    ),
-  };
-};
-
 const styles = StyleSheet.create({
-  toolbarActions: {
-    flexDirection: 'row',
-  },
   screen: {
     padding: 16,
   },
@@ -164,6 +147,9 @@ const styles = StyleSheet.create({
   },
   smallSubheading: {
     fontSize: 14,
+  },
+  header: {
+    flexDirection: 'row',
   },
 });
 

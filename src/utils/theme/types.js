@@ -22,4 +22,6 @@ export type ThemeColorsType = {|
   +textSegmentedControl: string,
   +backgroundSegmentedControl: string,
   +selectedSegmentedControl: string,
+  +snackBarBackground: string,
+  +snackBarText: string,
 |};

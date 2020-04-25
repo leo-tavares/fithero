@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { VirtualizedList, Platform, StyleSheet, View } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import useRealmResultsHook from '../../../hooks/useRealmResultsHook';
 import {
@@ -20,7 +21,6 @@ import {
   getMaxSetByType,
 } from '../../../database/services/WorkoutSetService';
 import type { DefaultUnitSystemType } from '../../../redux/modules/settings';
-import type { NavigationType } from '../../../types';
 import { dateToString, getToday } from '../../../utils/date';
 import i18n from '../../../utils/i18n';
 import PersonalRecords from './PersonalRecords';
@@ -30,21 +30,24 @@ import {
 } from '../../../database/utils';
 import useMaxSetHook from '../../../hooks/useMaxSetHook';
 import { REALM_DEFAULT_DEBOUNCE_VALUE } from '../../../database/constants';
+import Card from '../../../components/Card';
 
-type Props = {
-  navigation: NavigationType<{
+type RouteType = {
+  params: {
     day: string,
     exerciseKey: string,
     exerciseName?: string,
-  }>,
+  },
 };
 
 // On Android as the tab is always rendered, we gotta do some more optimizations
 const debounceTime =
   Platform.OS === 'android' ? REALM_DEFAULT_DEBOUNCE_VALUE : 0;
 
-const ExerciseHistory = (props: Props) => {
-  const type = props.navigation.state.params.exerciseKey;
+const ExerciseHistory = () => {
+  const { navigate } = useNavigation();
+  const route: RouteType = useRoute();
+  const type = route.params.exerciseKey;
   const defaultUnitSystem: DefaultUnitSystemType = useSelector(
     state => state.settings.defaultUnitSystem
   );
@@ -105,10 +108,10 @@ const ExerciseHistory = (props: Props) => {
         <Card
           style={styles.card}
           onPress={() => {
-            const { exerciseKey, exerciseName } = props.navigation.state.params;
-            props.navigation.navigate('EditSetsModal', {
+            const { exerciseKey, exerciseName } = route.params;
+            navigate('EditSetsModal', {
               isModal: true,
-              day: item.date,
+              day: dateToString(item.date),
               exerciseName,
               exerciseKey,
             });

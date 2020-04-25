@@ -2,17 +2,16 @@
 
 import * as React from 'react';
 import { StyleSheet } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 
 import withTheme from '../../utils/theme/withTheme';
-import type { NavigationType } from '../../types';
 import type { ThemeType } from '../../utils/theme/withTheme';
-import { useNavigation } from 'react-navigation-hooks';
+import Card from '../Card';
 
 type Props = {
   comments: string,
   day: string,
-  navigation: NavigationType<{ day: string }>,
   theme: ThemeType,
 };
 

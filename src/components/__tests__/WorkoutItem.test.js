@@ -23,8 +23,6 @@ jest.mock('../../database/services/WorkoutSetService', () => ({
   getMaxRepByType: jest.fn(() => new MockRealmArray()),
 }));
 
-jest.mock('react-navigation-hooks');
-
 describe('WorkoutItem', () => {
   const mockExercise = getMockExercises(mockMultipleSets)[0];
   const _getWorkout = (

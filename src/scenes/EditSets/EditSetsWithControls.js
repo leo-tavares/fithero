@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { Keyboard, StyleSheet, View } from 'react-native';
-import { Card } from 'react-native-paper';
 import { AndroidBackHandler } from 'react-navigation-backhandler';
 
 import type {
@@ -34,6 +33,7 @@ import {
 } from '../../utils/metrics';
 import type { DefaultUnitSystemType } from '../../redux/modules/settings';
 import EditSetsList from './EditSetsList';
+import Card from '../../components/Card';
 
 type Props = {
   day: string,
@@ -269,7 +269,10 @@ export class EditSetsWithControls extends React.Component<Props, State> {
     const unit = getWeightUnit(exercise, defaultUnitSystem);
 
     return (
-      <AndroidBackHandler onBackPress={this.onBackButtonPressAndroid}>
+      <AndroidBackHandler
+        onBackPress={this.onBackButtonPressAndroid}
+        testID="androidBackHandler"
+      >
         <View style={styles.container}>
           <Card style={styles.card}>
             <View style={styles.cardContent}>
@@ -283,8 +286,8 @@ export class EditSetsWithControls extends React.Component<Props, State> {
                 })}
                 onChangeText={this._onChangeWeightInput}
                 controls={[
-                  { icon: 'remove', action: this.weightDec },
-                  { icon: 'add', action: this.weightInc },
+                  { icon: 'minus', action: this.weightDec },
+                  { icon: 'plus', action: this.weightInc },
                 ]}
                 keyboardType="numeric"
                 containerStyle={[
@@ -292,18 +295,20 @@ export class EditSetsWithControls extends React.Component<Props, State> {
                   styles.weightSeparation,
                 ]}
                 labelStyle={styles.weightSeparation}
+                testID="weightInput"
               />
               <EditSetsInputControls
                 input={reps}
                 label={i18n.t('reps.title')}
                 onChangeText={this._onChangeRepsInput}
                 controls={[
-                  { icon: 'remove', action: this.repsDec },
-                  { icon: 'add', action: this.repsInc },
+                  { icon: 'minus', action: this.repsDec },
+                  { icon: 'plus', action: this.repsInc },
                 ]}
                 keyboardType="number-pad"
                 containerStyle={[styles.repsContainer, styles.repsSeparation]}
                 labelStyle={styles.repsSeparation}
+                testID="repsInput"
               />
             </View>
             <EditSetActionButtons

@@ -1,80 +1,84 @@
 /* @flow */
 
-import * as React from 'react';
+import React, { useCallback } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
-import { Caption, IconButton } from 'react-native-paper';
+import { Caption, IconButton, useTheme } from 'react-native-paper';
 import type {
   TextStyleProp,
   ViewStyleProp,
 } from 'react-native/Libraries/StyleSheet/StyleSheet';
 
 import type { ThemeType } from '../../utils/theme/withTheme';
-import withTheme from '../../utils/theme/withTheme';
 
 type Props = {
   controls: Array<{
-    icon: 'remove' | 'add',
+    icon: 'minus' | 'plus',
     action: (property: string, value: number) => void,
   }>,
   input: string,
   label: string,
   onChangeText: (value: string) => void,
-  theme: ThemeType,
   containerStyle?: ViewStyleProp,
   labelStyle?: TextStyleProp,
+  testID: string,
 };
 
 const increaseButtonSize = Platform.OS === 'ios' ? 36 : 28;
 
-class EditSetsInputControls extends React.Component<Props> {
-  static _renderInput(control) {
-    return (
+const EditSetsInputControls = (props: Props) => {
+  const {
+    controls,
+    input,
+    label,
+    onChangeText,
+    containerStyle,
+    labelStyle,
+    testID,
+    ...rest
+  } = props;
+
+  const theme: ThemeType = useTheme();
+
+  const renderInput = useCallback(
+    (control, testID) => (
       <IconButton
         icon={control.icon}
         size={20}
         style={styles.increaseButton}
         onPress={control.action}
+        testID={testID}
       />
-    );
-  }
+    ),
+    []
+  );
 
-  render() {
-    const {
-      controls,
-      input,
-      label,
-      onChangeText,
-      theme,
-      containerStyle,
-      labelStyle,
-      ...rest
-    } = this.props;
-
-    return (
-      <View style={[styles.container, containerStyle]}>
-        <Caption style={[styles.lineTitle, labelStyle]}>{label}</Caption>
-        <View style={styles.lineInput}>
-          {EditSetsInputControls._renderInput(controls[0])}
-          <TextInput
-            value={input}
-            onChangeText={onChangeText}
-            selectionColor={theme.colors.textSelection}
-            style={[
-              {
-                color: theme.colors.text,
-              },
-              styles.textInput,
-            ]}
-            placeholderTextColor={theme.colors.placeholder}
-            returnKeyType="done"
-            {...rest}
-          />
-          {EditSetsInputControls._renderInput(controls[1])}
-        </View>
+  return (
+    <View style={[styles.container, containerStyle]}>
+      <Caption testID={`${testID}Label`} style={[styles.lineTitle, labelStyle]}>
+        {label}
+      </Caption>
+      <View style={styles.lineInput}>
+        {renderInput(controls[0], `${testID}ControlLeft`)}
+        <TextInput
+          value={input}
+          onChangeText={onChangeText}
+          selectionColor={theme.colors.textSelection}
+          style={[
+            {
+              color: theme.colors.text,
+            },
+            styles.textInput,
+          ]}
+          placeholderTextColor={theme.colors.placeholder}
+          returnKeyType="done"
+          testID={testID}
+          {...rest}
+        />
+        {renderInput(controls[1], `${testID}ControlRight`)}
       </View>
-    );
-  }
-}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -104,4 +108,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default withTheme(EditSetsInputControls);
+export default EditSetsInputControls;

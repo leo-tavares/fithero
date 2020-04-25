@@ -2,44 +2,42 @@
 
 import * as React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button } from 'react-native-paper';
+import { Button, useTheme } from 'react-native-paper';
 
 import i18n from '../../utils/i18n';
 import type { ThemeType } from '../../utils/theme/withTheme';
-import withTheme from '../../utils/theme/withTheme';
 
 type Props = {
   isUpdate: boolean,
   onAddSet: () => void,
   onDeleteSet: () => void,
-  theme: ThemeType,
 };
 
-class EditSetActionButtons extends React.Component<Props> {
-  render() {
-    const { isUpdate, theme } = this.props;
+const EditSetActionButtons = ({ isUpdate, onAddSet, onDeleteSet }: Props) => {
+  const theme: ThemeType = useTheme();
 
-    return (
-      <View style={styles.controls}>
-        <Button
-          onPress={this.props.onAddSet}
-          color={theme.colors.text}
-          style={[styles.button, styles.confirm]}
-        >
-          {i18n.t(isUpdate ? 'update' : 'add')}
-        </Button>
-        <Button
-          onPress={this.props.onDeleteSet}
-          color={theme.colors.text}
-          disabled={!isUpdate}
-          style={[styles.button, styles.delete]}
-        >
-          {i18n.t('delete')}
-        </Button>
-      </View>
-    );
-  }
-}
+  return (
+    <View style={styles.controls}>
+      <Button
+        onPress={onAddSet}
+        color={theme.colors.text}
+        style={[styles.button, styles.confirm]}
+        testID="addSetButton"
+      >
+        {i18n.t(isUpdate ? 'update' : 'add')}
+      </Button>
+      <Button
+        onPress={onDeleteSet}
+        color={theme.colors.text}
+        disabled={!isUpdate}
+        style={[styles.button, styles.delete]}
+        testID="deleteSetButton"
+      >
+        {i18n.t('delete')}
+      </Button>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   controls: {
@@ -56,4 +54,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default withTheme(EditSetActionButtons);
+export default EditSetActionButtons;

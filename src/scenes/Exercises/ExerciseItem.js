@@ -28,7 +28,7 @@ class ExerciseItem extends React.PureComponent<Props> {
   render() {
     const { exercise, theme } = this.props;
     return (
-      <TouchableRipple onPress={this._toggleCheck}>
+      <TouchableRipple onPress={this._toggleCheck} testID={exercise.id}>
         <View style={styles.itemContainer}>
           <View style={styles.row}>
             <Paragraph

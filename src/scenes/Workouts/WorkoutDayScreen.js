@@ -4,37 +4,17 @@ import React, { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  getDatePrettyFormat,
-  getToday,
-  dateToWorkoutId,
-} from '../../utils/date';
+import { dateToWorkoutId } from '../../utils/date';
 import { getWorkoutById } from '../../database/services/WorkoutService';
-import type { NavigationType } from '../../types';
 import type { WorkoutSchemaType } from '../../database/types';
-import i18n from '../../utils/i18n';
-import HeaderOverflowButton from '../../components/Header/HeaderOverflowButton';
-import type { ThemeType } from '../../utils/theme/withTheme';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
 import WorkoutScreen from '../../components/Workouts/WorkoutScreen';
 import useRealmResultsHook from '../../hooks/useRealmResultsHook';
-import { useNavigationParam } from 'react-navigation-hooks';
-import { dispatch } from '../../redux/configureStore';
+import { useRoute } from '@react-navigation/native';
 import { toggleSnackbar } from '../../redux/modules/workoutDay';
-import { handleWorkoutToolbarMenu } from '../../utils/overflowActions';
-
-type NavigationObjectType = {
-  navigation: NavigationType<{ day: string, handleToolbarMenu: () => void }>,
-};
-
-type NavigationOptions = NavigationObjectType & {
-  screenProps: {
-    theme: ThemeType,
-  },
-};
 
 const WorkoutDayScreen = () => {
-  const workoutId = dateToWorkoutId(useNavigationParam('day'));
+  const route = useRoute();
+  const workoutId = dateToWorkoutId(route.params.day);
   const showSnackbar = useSelector(state => state.workoutDay.showSnackbar);
   const dispatch = useDispatch();
 
@@ -57,39 +37,6 @@ const WorkoutDayScreen = () => {
       dismissSnackbar={dismissSnackbar}
     />
   );
-};
-
-WorkoutDayScreen.navigationOptions = ({
-  navigation,
-  screenProps,
-}: NavigationOptions) => {
-  const { params = {} } = navigation.state;
-
-  const handleToolbarMenu = (index: number) => {
-    const workoutId = dateToWorkoutId(params.day);
-    handleWorkoutToolbarMenu({
-      index,
-      selectedDay: workoutId,
-      navigate: navigation.navigate,
-      showSnackbar: () => dispatch(toggleSnackbar(true)),
-    });
-  };
-
-  return {
-    ...getDefaultNavigationOptions(screenProps.theme),
-    title: getDatePrettyFormat(params.day, getToday(), true),
-    headerRight: (
-      <HeaderOverflowButton
-        actions={[
-          i18n.t('comment_workout'),
-          i18n.t('share_workout'),
-          i18n.t('copy_workout'),
-        ]}
-        onPress={handleToolbarMenu}
-        last
-      />
-    ),
-  };
 };
 
 const styles = StyleSheet.create({

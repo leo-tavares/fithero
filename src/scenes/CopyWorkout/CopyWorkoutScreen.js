@@ -2,9 +2,10 @@
 
 import React, { useCallback, useEffect } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
+import { useRoute } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { getDefaultNavigationOptions } from '../../utils/navigation';
 import CopyWorkoutItem from './CopyWorkoutItem';
 import { getAllWorkoutsWithExercisesSortedByDate } from '../../database/services/WorkoutService';
 import {
@@ -13,15 +14,14 @@ import {
   getToday,
   isSameDay,
 } from '../../utils/date';
-import { useNavigationParam } from 'react-navigation-hooks';
-import { useDispatch, useSelector } from 'react-redux';
 import { setSelectedWorkout } from '../../redux/modules/copyWorkout';
-import CopyWorkoutButton from './CopyWorkoutButton';
 import i18n from '../../utils/i18n';
 import Screen from '../../components/Screen';
+import Card from '../../components/Card';
 
 const CopyWorkoutScreen = () => {
-  const day = useNavigationParam('day');
+  const route = useRoute();
+  const day = route.params.day;
   const selectedWorkout = useSelector(
     state => state.copyWorkout.selectedWorkout
   );
@@ -94,13 +94,5 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 });
-
-CopyWorkoutScreen.navigationOptions = ({ screenProps }) => {
-  return {
-    ...getDefaultNavigationOptions(screenProps.theme),
-    title: null,
-    headerRight: <CopyWorkoutButton />,
-  };
-};
 
 export default CopyWorkoutScreen;

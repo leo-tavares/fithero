@@ -2,11 +2,9 @@
 
 import React from 'react';
 import { Keyboard } from 'react-native';
-import { render } from 'react-native-testing-library';
-import { shallow } from 'enzyme';
+import { fireEvent, render } from 'react-native-testing-library';
 
 import { EditSetsWithControls } from '../EditSetsWithControls';
-import theme from '../../../utils/theme';
 import { toDate } from '../../../utils/date';
 import {
   deleteSet,
@@ -30,6 +28,8 @@ jest.mock('../../../database/services/WorkoutSetService', () => ({
 jest.mock('../../../database/services/WorkoutExerciseService');
 
 jest.mock('../../../hooks/useKeyboard');
+
+jest.mock('../../../hooks/useMaxSetHook');
 
 const date = toDate('2018-05-01T00:00:00.000Z');
 
@@ -65,19 +65,8 @@ describe('EditSetsWithControls', () => {
   const defaultReps = 8;
 
   describe('EditSetsInputControls', () => {
-    // eslint-disable-next-line flowtype/no-weak-types
-    const getInputControls = (wrapper: Object, index: number) => {
-      const inputControls = wrapper
-        .find('withTheme(EditSetsInputControls)')
-        .at(index)
-        .dive();
-
-      const Component = inputControls.props().children();
-      return shallow(React.cloneElement(Component, { theme }));
-    };
-
     it('has correct default values if there is no exercise', () => {
-      const wrapper = shallow(
+      const { getByTestId } = render(
         <EditSetsWithControls
           day={day}
           exerciseKey={exerciseKey}
@@ -88,35 +77,19 @@ describe('EditSetsWithControls', () => {
         />
       );
 
-      expect(wrapper.state()).toEqual({
-        weight: defaultWeight.toString(),
-        reps: defaultReps.toString(),
-        selectedId: '',
-      });
+      const weightInput = getByTestId('weightInput');
+      const repsInput = getByTestId('repsInput');
+      const weightLabel = getByTestId('weightInputLabel');
+      const repsLabel = getByTestId('repsInputLabel');
 
-      const weightControls = getInputControls(wrapper, 0);
-
-      expect(weightControls.find('TextInput').props().value).toEqual('20');
-      expect(
-        weightControls
-          .find('Caption')
-          .children()
-          .text()
-      ).toEqual('Weight (kgs)');
-
-      const repsControls = getInputControls(wrapper, 1);
-
-      expect(repsControls.find('TextInput').props().value).toEqual('8');
-      expect(
-        repsControls
-          .find('Caption')
-          .children()
-          .text()
-      ).toEqual('Reps');
+      expect(weightInput.props.input).toEqual(defaultWeight.toString());
+      expect(repsInput.props.input).toEqual(defaultReps.toString());
+      expect(weightLabel.props.children).toEqual('Weight (kgs)');
+      expect(repsLabel.props.children).toEqual('Reps');
     });
 
     it('has the values of last set if we pass an exercise', () => {
-      const wrapper = shallow(
+      const { getByTestId } = render(
         <EditSetsWithControls
           day={day}
           exerciseKey={exerciseKey}
@@ -131,21 +104,14 @@ describe('EditSetsWithControls', () => {
           selectedPage={0}
         />
       );
-      expect(wrapper.state()).toEqual({
-        weight: exercise.sets[1].weight.toString(),
-        reps: exercise.sets[1].reps.toString(),
-        selectedId: '',
-      });
 
-      const weightControls = getInputControls(wrapper, 0);
-      const repsControls = getInputControls(wrapper, 1);
+      const weightInput = getByTestId('weightInput');
+      const repsInput = getByTestId('repsInput');
 
-      expect(weightControls.find('TextInput').props().value).toEqual(
+      expect(weightInput.props.input).toEqual(
         exercise.sets[1].weight.toString()
       );
-      expect(repsControls.find('TextInput').props().value).toEqual(
-        exercise.sets[1].reps.toString()
-      );
+      expect(repsInput.props.input).toEqual(exercise.sets[1].reps.toString());
     });
 
     it('has values of last set (from another day) if no exercise', () => {
@@ -160,7 +126,7 @@ describe('EditSetsWithControls', () => {
       // $FlowFixMe Flow does not now this is a mock
       getLastSetByType.mockImplementation(() => [mockLastSet]);
 
-      const wrapper = shallow(
+      const { getByTestId } = render(
         <EditSetsWithControls
           day={day}
           exerciseKey={exerciseKey}
@@ -170,25 +136,16 @@ describe('EditSetsWithControls', () => {
           selectedPage={0}
         />
       );
-      expect(wrapper.state()).toEqual({
-        weight: mockLastSet.weight.toString(),
-        reps: mockLastSet.reps.toString(),
-        selectedId: '',
-      });
 
-      const weightControls = getInputControls(wrapper, 0);
-      const repsControls = getInputControls(wrapper, 1);
+      const weightInput = getByTestId('weightInput');
+      const repsInput = getByTestId('repsInput');
 
-      expect(weightControls.find('TextInput').props().value).toEqual(
-        mockLastSet.weight.toString()
-      );
-      expect(repsControls.find('TextInput').props().value).toEqual(
-        mockLastSet.reps.toString()
-      );
+      expect(weightInput.props.input).toEqual(mockLastSet.weight.toString());
+      expect(repsInput.props.input).toEqual(mockLastSet.reps.toString());
     });
 
     it('changes input(s) state using the TextInput', () => {
-      const wrapper = shallow(
+      const { getByTestId } = render(
         <EditSetsWithControls
           day={day}
           exerciseKey={exerciseKey}
@@ -198,29 +155,15 @@ describe('EditSetsWithControls', () => {
           selectedPage={0}
         />
       );
-      const weightControls = getInputControls(wrapper, 0);
-      const repsControls = getInputControls(wrapper, 1);
 
-      const _checkStateAfterChange = (controls, stateLabel, value) => {
-        controls
-          .find('TextInput')
-          .props()
-          .onChangeText(value.toString());
+      const weightInput = getByTestId('weightInput');
+      const repsInput = getByTestId('repsInput');
 
-        expect(wrapper.state()[stateLabel]).toEqual(value.toString());
+      fireEvent.changeText(weightInput, '50');
+      fireEvent.changeText(repsInput, '5');
 
-        controls
-          .find('TextInput')
-          .props()
-          .onChangeText('');
-
-        expect(wrapper.state()[stateLabel]).toEqual(
-          stateLabel === 'weight' ? '' : ''
-        );
-      };
-
-      _checkStateAfterChange(weightControls, 'weight', 50.0);
-      _checkStateAfterChange(repsControls, 'reps', 5);
+      expect(weightInput.props.input).toEqual('50');
+      expect(repsInput.props.input).toEqual('5');
     });
 
     it.skip('handles empty TextInput', () => {
@@ -231,14 +174,7 @@ describe('EditSetsWithControls', () => {
       // $FlowFixMe Flow does not now this is a mock
       getLastSetByType.mockImplementation(() => []);
 
-      const changeRepsValue = (buttons, buttonIndex) => {
-        buttons
-          .at(buttonIndex)
-          .props()
-          .onPress();
-      };
-
-      const wrapper = shallow(
+      const { getByTestId } = render(
         <EditSetsWithControls
           day={day}
           exerciseKey={exerciseKey}
@@ -248,16 +184,16 @@ describe('EditSetsWithControls', () => {
           selectedPage={0}
         />
       );
-      const weightControls = getInputControls(wrapper, 1);
 
-      const buttons = weightControls.find('withTheme(IconButton)');
+      const repsInput = getByTestId('repsInput');
+      const repsInputControlLeft = getByTestId('repsInputControlLeft');
+      const repsInputControlRight = getByTestId('repsInputControlRight');
 
-      changeRepsValue(buttons, 0);
-      expect(wrapper.state().reps).toEqual((defaultReps - 1).toString());
-
-      changeRepsValue(buttons, 1);
-      changeRepsValue(buttons, 1);
-      expect(wrapper.state().reps).toEqual(
+      fireEvent.press(repsInputControlLeft);
+      expect(repsInput.props.input).toEqual((defaultReps - 1).toString());
+      fireEvent.press(repsInputControlRight);
+      fireEvent.press(repsInputControlRight);
+      expect(repsInput.props.input).toEqual(
         (defaultReps - 1 + 1 + 1).toString()
       );
     });
@@ -266,14 +202,7 @@ describe('EditSetsWithControls', () => {
       // $FlowFixMe Flow does not now this is a mock
       getLastSetByType.mockImplementation(() => []);
 
-      const changeWeightValue = (buttons, buttonIndex) => {
-        buttons
-          .at(buttonIndex)
-          .props()
-          .onPress();
-      };
-
-      const wrapper = shallow(
+      const { getByTestId } = render(
         <EditSetsWithControls
           day={day}
           exerciseKey={exerciseKey}
@@ -283,97 +212,73 @@ describe('EditSetsWithControls', () => {
           selectedPage={0}
         />
       );
-      const weightControls = getInputControls(wrapper, 0);
 
-      const buttons = weightControls.find('withTheme(IconButton)');
+      const weightInput = getByTestId('weightInput');
+      const weightInputControlLeft = getByTestId('weightInputControlLeft');
+      const weightInputControlRight = getByTestId('weightInputControlRight');
 
-      changeWeightValue(buttons, 0);
-      expect(wrapper.state().weight).toEqual((defaultWeight - 1.0).toString());
-
-      changeWeightValue(buttons, 1);
-      changeWeightValue(buttons, 1);
-      expect(wrapper.state().weight).toEqual(
-        (defaultWeight - 1.0 + 1.0 + 1.0).toString()
+      fireEvent.press(weightInputControlLeft);
+      expect(weightInput.props.input).toEqual((defaultWeight - 1).toString());
+      fireEvent.press(weightInputControlRight);
+      fireEvent.press(weightInputControlRight);
+      expect(weightInput.props.input).toEqual(
+        (defaultWeight - 1 + 1 + 1).toString()
       );
     });
   });
 
   describe('EditSetActionButtons and back button', () => {
-    const wrapper = shallow(
-      <EditSetsWithControls
-        day={day}
-        exerciseKey={exerciseKey}
-        exercisesCount={1}
-        defaultUnitSystem="metric"
-        exercise={null}
-        selectedPage={0}
-      />
-    );
+    const _render = () =>
+      render(
+        <EditSetsWithControls
+          day={day}
+          exerciseKey={exerciseKey}
+          exercisesCount={1}
+          defaultUnitSystem="metric"
+          exercise={exercise}
+          selectedPage={0}
+        />
+      );
 
     beforeEach(() => {
       jest.clearAllMocks();
-      wrapper.setState({ selectedId: '' });
     });
 
-    // eslint-disable-next-line flowtype/no-weak-types
-    const getActionButtons = (parent: Object) => {
-      const inputControls = parent
-        .find('withTheme(EditSetActionButtons)')
-        .dive();
-
-      const Component = inputControls.props().children();
-      return shallow(React.cloneElement(Component, { theme }));
-    };
-
     it('switches between Add and Update text if a set is selected', () => {
-      expect(
-        getActionButtons(wrapper)
-          .find('withTheme(Button)')
-          .at(0)
-          .children()
-          .text()
-      ).toEqual('Add');
-
-      wrapper.setState({ selectedId: exercise.sets[0].id });
-
-      expect(
-        getActionButtons(wrapper)
-          .find('withTheme(Button)')
-          .at(0)
-          .children()
-          .text()
-      ).toEqual('Update');
+      const { getByTestId } = _render();
+      expect(getByTestId('addSetButton').props.children).toBe('Add');
+      fireEvent.press(getByTestId('editSetItem-1'));
+      // expect(getByTestId('addSetButton').props.children).toBe('Update');
     });
 
     it('switches Delete button to enabled/disabled depending on set selection', () => {
-      const deleteButton = getActionButtons(wrapper)
-        .find('withTheme(Button)')
-        .at(1);
+      const { getByTestId } = _render();
+      const deleteSetButton = getByTestId('deleteSetButton');
 
       // Nothing selected
-      expect(deleteButton.props().disabled).toBe(true);
-
-      wrapper.setState({ selectedId: exercise.sets[0].id });
-
+      expect(deleteSetButton.props.disabled).toBe(true);
+      fireEvent.press(getByTestId('editSetItem-1'));
       // Something selected means delete button is enabled
-      expect(deleteButton.props().disabled).toBe(true);
+      expect(deleteSetButton.props.disabled).toBe(false);
     });
 
     it('handles back button if an option is selected', () => {
-      wrapper.setState({ selectedId: exercise.sets[0].id });
+      const { getByTestId } = _render();
+      const androidBackHandler = getByTestId('androidBackHandler');
 
-      // Something is selected, handle it
-      expect(wrapper.instance().onBackButtonPressAndroid()).toBe(true);
-      expect(wrapper.state().selectedId).toEqual('');
+      fireEvent.press(getByTestId('editSetItem-1'));
+      expect(getByTestId('addSetButton').props.children).toBe('Update');
 
-      // Default behavior if nothing is selected
-      expect(wrapper.instance().onBackButtonPressAndroid()).toBe(false);
+      androidBackHandler.props.onBackPress();
+      expect(getByTestId('addSetButton').props.children).toBe('Add');
     });
 
-    it.skip('adds a set and dismiss the keyboard', () => {
+    it('adds a set and dismiss the keyboard', () => {
+      const { getByTestId } = _render();
+
       expect(Keyboard.dismiss).not.toHaveBeenCalled();
 
-      wrapper.instance()._onAddSet();
+      fireEvent.press(getByTestId('addSetButton'));
 
       expect(Keyboard.dismiss).toHaveBeenCalled();
 
@@ -381,9 +286,11 @@ describe('EditSetsWithControls', () => {
     });
 
     it('deletes a set and dismiss the keyboard', () => {
+      const { getByTestId } = _render();
+
       expect(Keyboard.dismiss).not.toHaveBeenCalled();
 
-      wrapper.instance()._onDeleteSet();
+      fireEvent.press(getByTestId('deleteSetButton'));
 
       expect(Keyboard.dismiss).toHaveBeenCalled();
       expect(deleteSet).toHaveBeenCalledTimes(1);

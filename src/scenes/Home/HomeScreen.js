@@ -6,12 +6,10 @@ import {
   Platform,
   StatusBar,
   StyleSheet,
-  View,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 
 import Screen from '../../components/Screen';
-import type { NavigationType } from '../../types';
 import DayRow from './DayRow';
 import {
   getCurrentWeek,
@@ -20,30 +18,14 @@ import {
 } from '../../utils/date';
 import { getWorkoutsByRange } from '../../database/services/WorkoutService';
 import type { WorkoutSchemaType } from '../../database/types';
-import HeaderIconButton from '../../components/Header/HeaderIconButton';
 import type {
   AppThemeType,
   FirstDayOfTheWeekType,
 } from '../../redux/modules/settings';
-import i18n from '../../utils/i18n';
 import { hideSplashScreen } from '../../native/RNSplashScreen';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
 import useRealmResultsHook from '../../hooks/useRealmResultsHook';
 import WorkoutScreen from '../../components/Workouts/WorkoutScreen';
-import HomeOverflowButton from './HomeOverflowButton';
 import { toggleSnackbar } from '../../redux/modules/home';
-
-type NavigationObjectType = {
-  navigation: NavigationType<{
-    handleToolbarMenu: () => void,
-  }>,
-};
-
-type NavigationOptions = NavigationObjectType & {
-  screenProps: {
-    theme: AppThemeType,
-  },
-};
 
 const HomeScreen = () => {
   const selectedDay = useSelector(state => state.home.selectedDay);
@@ -113,40 +95,10 @@ const HomeScreen = () => {
   );
 };
 
-HomeScreen.navigationOptions = ({
-  navigation,
-  screenProps,
-}: NavigationOptions) => {
-  const navigateToCalendar = () => {
-    navigation.navigate('Calendar', {
-      today: getToday().format('YYYY-MM-DD'),
-    });
-  };
-  return {
-    ...getDefaultNavigationOptions(screenProps.theme),
-    headerRight: (
-      <View style={styles.headerButtons}>
-        <HeaderIconButton icon="date-range" onPress={navigateToCalendar} />
-        <HomeOverflowButton
-          actions={[
-            i18n.t('comment_workout'),
-            i18n.t('share_workout'),
-            i18n.t('copy_workout'),
-          ]}
-          last
-        />
-      </View>
-    ),
-  };
-};
-
 const styles = StyleSheet.create({
   list: {
     flexGrow: 1,
     paddingBottom: 56 + 32, // Taking FAB into account
-  },
-  headerButtons: {
-    flexDirection: 'row',
   },
 });
 

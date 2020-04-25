@@ -1,9 +1,9 @@
 /* @flow */
 
 import * as React from 'react';
-import { InteractionManager } from 'react-native';
 import { CalendarList } from 'react-native-calendars';
 import { connect } from 'react-redux';
+import { Platform } from 'react-native';
 
 import Screen from '../../components/Screen';
 import type { NavigationType, RealmResults } from '../../types';
@@ -13,24 +13,20 @@ import { getAllWorkouts } from '../../database/services/WorkoutService';
 import type { WorkoutSchemaType } from '../../database/types';
 import withTheme from '../../utils/theme/withTheme';
 import type { ThemeType } from '../../utils/theme/withTheme';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
 
 type NavigationObjectType = {
-  navigation: NavigationType<{
-    today: string,
-    scrollToToday?: () => void,
-  }>,
-};
-
-type NavigationOptions = NavigationObjectType & {
-  screenProps: {
-    theme: ThemeType,
-  },
+  navigation: NavigationType,
 };
 
 type Props = NavigationObjectType & {
   firstDay: number,
   theme: ThemeType,
+  route: {
+    params: {
+      today: string,
+      scrollToToday?: () => void,
+    },
+  },
 };
 
 type State = {
@@ -50,27 +46,6 @@ export class CalendarScreen extends React.Component<Props, State> {
 
   workoutsListener: RealmResults<WorkoutSchemaType>;
 
-  static navigationOptions = ({
-    navigation,
-    screenProps,
-  }: NavigationOptions) => {
-    const { params = {} } = navigation.state;
-    return {
-      ...getDefaultNavigationOptions(screenProps.theme),
-      headerRight: (
-        <HeaderIconButton
-          onPress={() => {
-            if (params.scrollToToday) {
-              params.scrollToToday();
-            }
-          }}
-          icon="today"
-          last
-        />
-      ),
-    };
-  };
-
   componentDidMount() {
     global.requestAnimationFrame(() => {
       this.workoutsListener = getAllWorkouts();
@@ -88,10 +63,17 @@ export class CalendarScreen extends React.Component<Props, State> {
         showCalendar: true,
       });
     });
-    InteractionManager.runAfterInteractions(() => {
-      this.props.navigation.setParams({
-        scrollToToday: this.scrollToToday,
-      });
+    // TODO use useLayoutEffect like here https://reactnavigation.org/docs/header-buttons/#header-interaction-with-its-screen-component
+    this.props.navigation.setOptions({
+      headerRight: () => (
+        <HeaderIconButton
+          onPress={() => {
+            this.scrollToToday();
+          }}
+          icon={Platform.OS === 'ios' ? 'today' : 'calendar-today'}
+          last
+        />
+      ),
     });
   }
 
@@ -100,7 +82,7 @@ export class CalendarScreen extends React.Component<Props, State> {
   }
 
   scrollToToday = () => {
-    const { today } = this.props.navigation.state.params;
+    const { today } = this.props.route.params;
     if (this.calendarList) {
       this.calendarList.scrollToDay(today, 0, true);
     }
@@ -116,7 +98,7 @@ export class CalendarScreen extends React.Component<Props, State> {
       firstDay,
       theme: { colors },
     } = this.props;
-    const { today } = this.props.navigation.state.params;
+    const { today } = this.props.route.params;
 
     return (
       <Screen>

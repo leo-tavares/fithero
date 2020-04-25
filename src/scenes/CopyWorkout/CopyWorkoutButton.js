@@ -1,16 +1,17 @@
 /* @flow */
 
 import React, { useRef } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import HeaderButton from '../../components/Header/HeaderButton';
 import i18n from '../../utils/i18n';
 import { useSelector } from 'react-redux';
 import { copyWorkout } from '../../utils/copyWorkout';
-import { useNavigation, useNavigationParam } from 'react-navigation-hooks';
 
 const CopyWorkoutButton = () => {
   const isCopying = useRef(false);
   const { goBack } = useNavigation();
-  const day = useNavigationParam('day');
+  const route = useRoute();
+  const day = route.params.day;
   const selectedWorkout = useSelector(
     state => state.copyWorkout.selectedWorkout
   );

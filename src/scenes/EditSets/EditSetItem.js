@@ -39,7 +39,7 @@ const EditSetItem = (props: Props) => {
   }, [onPressItem, set.id]);
 
   return (
-    <TouchableWithoutFeedback onPress={onPress}>
+    <TouchableWithoutFeedback onPress={onPress} testID={`editSetItem-${index}`}>
       <View
         style={[
           styles.item,

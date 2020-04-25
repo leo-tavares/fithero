@@ -3,8 +3,6 @@
 
 import { type ____DangerouslyImpreciseStyleProp_Internal } from 'react-native/Libraries/StyleSheet/StyleSheetTypes';
 
-import type { WorkoutSetSchemaType } from './database/types';
-
 // Shared types
 export type StylePropType = ____DangerouslyImpreciseStyleProp_Internal;
 
@@ -13,23 +11,13 @@ export type NavigateType = (
   params?: { [key: string]: mixed }
 ) => void;
 
-// TODO replace this type for flow-typed react-navigation 2
-export type NavigationType<T> = {
-  state: {
-    params: T,
-  },
-  addListener: (
-    type: 'willBlur' | 'didFocus',
-    () => void
-  ) => {
-    remove: () => void,
-  },
+export type NavigationType = {
   push: (route: string, params?: { [key: string]: mixed }) => void,
   navigate: NavigateType,
-  // eslint-disable-next-line flowtype/no-weak-types
-  setParams: (params: { [key: string]: any }) => void,
   goBack: (routeKey?: ?string) => boolean,
   dispatch: (() => void) => void,
+  // eslint-disable-next-line flowtype/no-weak-types
+  setOptions: Object => void,
 };
 
 export type DispatchType<T> = {
@@ -40,10 +28,6 @@ export type DispatchType<T> = {
 export type CategoryType = {|
   id: string,
   name: string,
-|};
-
-export type ExerciseLog = {|
-  sets: Array<WorkoutSetSchemaType>,
 |};
 
 export interface RealmResults<T> extends Array<T> {

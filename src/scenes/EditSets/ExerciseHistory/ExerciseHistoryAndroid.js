@@ -1,36 +1,26 @@
 /* @flow */
 
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 
 import type { DefaultUnitSystemType } from '../../../redux/modules/settings';
-import type { NavigationType } from '../../../types';
 import ExerciseHistory from './ExerciseHistory';
 
 type Props = {
   type: 'string',
   unit: DefaultUnitSystemType,
-  navigation: NavigationType<{
-    day: string,
-    exerciseKey: string,
-    exerciseName?: string,
-  }>,
 };
 
 const ExerciseHistoryAndroid = (props: Props) => {
   const [showHistory, setShowHistory] = useState(false);
+  const isFocused = useIsFocused();
 
-  useLayoutEffect(() => {
-    const didFocusSubscription = props.navigation.addListener(
-      'didFocus',
-      () => {
-        // We just need this once, not when we re-focus
-        didFocusSubscription.remove();
-        setShowHistory(true);
-      }
-    );
-    return () => didFocusSubscription.remove();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(() => {
+    if (isFocused && !showHistory) {
+      // We just need this once, not when we re-focus
+      setShowHistory(true);
+    }
+  }, [isFocused, showHistory]);
 
   if (!showHistory) return null;
 

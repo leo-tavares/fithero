@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useCallback } from 'react';
 import type { ViewStyleProp } from 'react-native/Libraries/StyleSheet/StyleSheet';
-import { useNavigation } from 'react-navigation-hooks';
+import { useNavigation } from '@react-navigation/native';
 import WorkoutList from './WorkoutList';
 import FABSnackbar from '../FABSnackbar';
 import i18n from '../../utils/i18n';
@@ -77,7 +77,7 @@ const WorkoutScreen = (props: Props) => {
         extraData={extraListData}
       />
       <FABSnackbar
-        fabIcon="add"
+        fabIcon="plus"
         onDismiss={onDismissSnackbar}
         show={snackbarVisible}
         snackbarText={i18n.t('share_workout__empty')}

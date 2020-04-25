@@ -8,32 +8,24 @@ import { AndroidBackHandler } from 'react-navigation-backhandler';
 import withTheme from '../../utils/theme/withTheme';
 import i18n from '../../utils/i18n';
 import { dateToString, getDatePrettyFormat, getToday } from '../../utils/date';
-import { getExerciseName } from '../../utils/exercises';
 import ExerciseHistory from './ExerciseHistory';
 import EditSetsScreen from './EditSetsScreen';
 import Screen from '../../components/Screen';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
-import type { NavigationType } from '../../types';
 import type { ThemeType } from '../../utils/theme/withTheme';
 
 const getContentComponent = index =>
   index === 0 ? EditSetsScreen : ExerciseHistory;
 
-type NavigationObjectType = {
-  navigation: NavigationType<{
+type RouteType = {
+  params: {
     day: string,
     exerciseKey: string,
     exerciseName?: string,
-  }>,
-};
-
-type NavigationOptions = NavigationObjectType & {
-  screenProps: {
-    theme: ThemeType,
   },
 };
 
-type Props = NavigationObjectType & {
+type Props = {
+  route: RouteType,
   theme: ThemeType,
 };
 
@@ -45,17 +37,6 @@ class EditSetsNavigator extends React.Component<Props, State> {
   viewPager: typeof TabbedViewPager;
   tabNames: Array<string>;
 
-  static navigationOptions = ({
-    navigation,
-    screenProps,
-  }: NavigationOptions) => ({
-    ...getDefaultNavigationOptions(screenProps.theme),
-    headerTitle: getExerciseName(
-      navigation.state.params.exerciseKey,
-      navigation.state.params.exerciseName
-    ),
-  });
-
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -63,7 +44,7 @@ class EditSetsNavigator extends React.Component<Props, State> {
     };
     this.tabNames = [
       getDatePrettyFormat(
-        props.navigation.state.params.day,
+        props.route.params.day,
         dateToString(getToday()),
         PixelRatio.get() < 2,
         true
@@ -86,7 +67,7 @@ class EditSetsNavigator extends React.Component<Props, State> {
   };
 
   render() {
-    const { navigation, theme } = this.props;
+    const { theme } = this.props;
 
     return (
       <Screen>
@@ -114,11 +95,7 @@ class EditSetsNavigator extends React.Component<Props, State> {
               const ContentComponent = getContentComponent(i);
               return (
                 <View key={i} style={styles.content}>
-                  {/* $FlowFixMe */}
-                  <ContentComponent
-                    navigation={navigation}
-                    selectedPage={this.state.selectedPage}
-                  />
+                  <ContentComponent selectedPage={this.state.selectedPage} />
                 </View>
               );
             })}

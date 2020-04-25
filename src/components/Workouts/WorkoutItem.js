@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 
 import { getExerciseName } from '../../utils/exercises';
@@ -26,6 +26,7 @@ import {
   getMaxSetByType,
 } from '../../database/services/WorkoutSetService';
 import { REALM_DEFAULT_DEBOUNCE_VALUE } from '../../database/constants';
+import Card from '../Card';
 
 type Props = {|
   exercise: WorkoutExerciseSchemaType,

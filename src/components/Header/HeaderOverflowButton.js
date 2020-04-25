@@ -61,7 +61,7 @@ class HeaderOverflowButton extends React.Component<Props> {
           this.menuRef = r;
         }}
         onPress={this._onPress}
-        icon={Platform.OS === 'ios' ? 'more-horiz' : 'more-vert'}
+        icon={Platform.OS === 'ios' ? 'more-horiz' : 'dots-vertical'}
         last={this.props.last}
       />
     );

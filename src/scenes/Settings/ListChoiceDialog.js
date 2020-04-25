@@ -82,7 +82,16 @@ class ListChoiceDialog extends React.Component<Props> {
           <Dialog.Title>{title}</Dialog.Title>
           {this._renderDialogContent()}
           <Dialog.Actions>
-            <Button onPress={onDismiss}>{i18n.t('cancel')}</Button>
+            <Button
+              onPress={onDismiss}
+              theme={{
+                colors: {
+                  primary: colors.accent,
+                },
+              }}
+            >
+              {i18n.t('cancel')}
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

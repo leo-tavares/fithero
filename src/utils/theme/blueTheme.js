@@ -1,5 +1,6 @@
 /* @flow */
 
+import { Platform } from 'react-native';
 import { Colors, DarkTheme } from 'react-native-paper';
 
 import type { ThemeColorsType } from './types';
@@ -25,7 +26,11 @@ const ThemeColors: ThemeColorsType = {
   selected,
   secondaryText: 'rgba(255, 255, 255, .7)',
   surface,
-  textSelection: '#6f8691',
+  textSelection:
+    Platform.OS === 'ios'
+      ? accent
+      : // accent with less opacity
+        'rgba(166,237,142, 0.4)',
   toolbar: primary,
   toolbarTint: Colors.white,
   trophy: accent,
@@ -33,6 +38,8 @@ const ThemeColors: ThemeColorsType = {
   textSegmentedControl: '#FFFFFF',
   backgroundSegmentedControl: isIOS13 ? surface : '#FFFFFF',
   selectedSegmentedControl: isIOS13 ? selected : '#FFFFFF',
+  snackBarBackground: '#000000',
+  snackBarText: '#FFFFFF',
 };
 
 const Theme: ThemeType = {
@@ -41,6 +48,7 @@ const Theme: ThemeType = {
     ...DarkTheme.colors,
     ...ThemeColors,
   },
+  mode: 'exact',
 };
 
 export default Theme;

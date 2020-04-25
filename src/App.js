@@ -39,10 +39,6 @@ if (global.__DEV__) {
   ]);
 }
 
-const navigationPersistenceKey = global.__DEV__
-  ? 'DEV_fithero-navigation-key'
-  : null;
-
 type State = {
   loading: boolean,
 };
@@ -98,16 +94,11 @@ export default class App extends React.Component<{}, State> {
       <Provider store={store}>
         {Platform.OS === 'ios' && <StatusBar barStyle="light-content" />}
         {!this.state.loading && (
-          <PaperThemeProvider
-            render={appTheme => (
-              <SafeAreaProvider>
-                <MainNavigator
-                  persistenceKey={navigationPersistenceKey}
-                  screenProps={{ theme: appTheme }}
-                />
-              </SafeAreaProvider>
-            )}
-          />
+          <PaperThemeProvider>
+            <SafeAreaProvider>
+              <MainNavigator />
+            </SafeAreaProvider>
+          </PaperThemeProvider>
         )}
       </Provider>
     );

@@ -1,8 +1,8 @@
 /* @flow */
 
 import { useCallback, useState, useEffect, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import debounce from 'lodash/debounce';
-import { useFocusEffect } from 'react-navigation-hooks';
 import { REALM_DEFAULT_DEBOUNCE_VALUE } from '../database/constants';
 
 type ResultType<T> = {

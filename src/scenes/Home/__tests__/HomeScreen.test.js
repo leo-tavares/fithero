@@ -2,17 +2,12 @@
 
 import * as React from 'react';
 import { render } from 'react-native-testing-library';
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
 
 import { getToday, toDate } from '../../../utils/date';
 import HomeScreen from '../HomeScreen';
-import { Provider } from 'react-redux';
 import { RealmArray } from '../../../database/services/__tests__/helpers/databaseMocks';
-import { createStore } from 'redux';
-
-jest.mock('react-navigation', () => ({
-  NavigationEvents: () => null,
-  withNavigation: c => c,
-}));
 
 const dateString = '2018-05-22T00:00:00.000Z';
 const dateStringLater = '2018-05-23T00:00:00.000Z';

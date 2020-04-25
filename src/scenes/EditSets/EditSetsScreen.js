@@ -4,37 +4,33 @@ import React, { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
+import { useRoute } from '@react-navigation/native';
 
 import Screen from '../../components/Screen';
-import type { NavigationType } from '../../types';
 import { getExerciseSchemaId } from '../../database/utils';
 import EditSetsWithControls from './EditSetsWithControls';
 import type { DefaultUnitSystemType } from '../../redux/modules/settings';
 import { getWorkoutExerciseById } from '../../database/services/WorkoutExerciseService';
 import useRealmResultsHook from '../../hooks/useRealmResultsHook';
 import type { WorkoutExerciseSchemaType } from '../../database/types';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
-import { dateToString, getDatePrettyFormat, getToday } from '../../utils/date';
-import HeaderIconButton from '../../components/Header/HeaderIconButton';
 import { getExerciseName } from '../../utils/exercises';
 
-type Props = {
-  navigation: NavigationType<{
+type RouteType = {
+  params: {
     day: string,
     exerciseKey: string,
     exerciseName?: string,
     isModal?: boolean,
-  }>,
+  },
+};
+
+type Props = {
   selectedPage?: number,
 };
 
 const EditSetsScreen = (props: Props) => {
-  const {
-    day,
-    exerciseKey,
-    exerciseName,
-    isModal,
-  } = props.navigation.state.params;
+  const route: RouteType = useRoute();
+  const { day, exerciseKey, exerciseName, isModal } = route.params;
   const { selectedPage } = props;
   const defaultUnitSystem: DefaultUnitSystemType = useSelector(
     state => state.settings.defaultUnitSystem
@@ -63,17 +59,6 @@ const EditSetsScreen = (props: Props) => {
       />
     </Screen>
   );
-};
-
-EditSetsScreen.navigationOptions = ({ navigation, screenProps }) => {
-  const { params = {} } = navigation.state;
-  return {
-    ...getDefaultNavigationOptions(screenProps.theme),
-    title: getDatePrettyFormat(params.day, dateToString(getToday())),
-    headerLeft: (
-      <HeaderIconButton icon="close" onPress={() => navigation.goBack()} />
-    ),
-  };
 };
 
 const styles = StyleSheet.create({

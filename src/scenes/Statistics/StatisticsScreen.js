@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useCallback } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 
 import {
@@ -19,22 +19,15 @@ import type {
 import { getSetsThisWeek } from '../../database/services/WorkoutSetService';
 import type { ThemeType } from '../../utils/theme/withTheme';
 import type {
-  AppThemeType,
   DefaultUnitSystemType,
   FirstDayOfTheWeekType,
 } from '../../redux/modules/settings';
 import { toLb } from '../../utils/metrics';
 import WorkoutTimesChart from './WorkoutTimesChart';
 import Screen from '../../components/Screen';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
 import withTheme from '../../utils/theme/withTheme';
 import useRealmResultsHook from '../../hooks/useRealmResultsHook';
-
-type NavigationOptions = {
-  screenProps: {
-    theme: AppThemeType,
-  },
-};
+import Card from '../../components/Card';
 
 type Props = {
   defaultUnitSystem: DefaultUnitSystemType,
@@ -141,12 +134,6 @@ const StatisticsScreen = (props: Props) => {
       </Card>
     </Screen>
   );
-};
-
-StatisticsScreen.navigationOptions = ({ screenProps }: NavigationOptions) => {
-  return {
-    ...getDefaultNavigationOptions(screenProps.theme),
-  };
 };
 
 const styles = StyleSheet.create({

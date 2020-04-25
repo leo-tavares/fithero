@@ -1,31 +1,34 @@
 /* @flow */
 
 import React, { useCallback } from 'react';
+import { useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+
 import type { HeaderOverflowButtonProps } from '../../components/Header/HeaderOverflowButton';
 import HeaderOverflowButton from '../../components/Header/HeaderOverflowButton';
-import { useSelector } from 'react-redux';
 import { dispatch } from '../../redux/configureStore';
-import { useNavigation } from '@react-navigation/native';
-import { toggleSnackbar } from '../../redux/modules/home';
+import { toggleSnackbar } from '../../redux/modules/workoutDay';
 import { handleWorkoutToolbarMenu } from '../../utils/overflowActions';
+import { dateToWorkoutId } from '../../utils/date';
 
-const HomeOverflowButton = (props: HeaderOverflowButtonProps) => {
+const WorkoutDayOverflowButton = (props: HeaderOverflowButtonProps) => {
   const { navigate } = useNavigation();
-  const selectedDay = useSelector(state => state.home.selectedDay);
+  const route = useRoute();
+  const workoutId = dateToWorkoutId(route.params.day);
 
   const handleToolbarMenu = useCallback(
-    (index: number) =>
+    (index: number) => {
       handleWorkoutToolbarMenu({
         index,
-        selectedDay,
+        selectedDay: workoutId,
         navigate,
         showSnackbar: () => dispatch(toggleSnackbar(true)),
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedDay]
+      });
+    },
+    [navigate, workoutId]
   );
 
   return <HeaderOverflowButton {...props} onPress={handleToolbarMenu} />;
 };
 
-export default HomeOverflowButton;
+export default WorkoutDayOverflowButton;
