@@ -41,8 +41,7 @@ jest.mock('expo-document-picker');
 jest.mock('../src/native/RNSplashScreen');
 
 // Make sure timezone is always the same when running tests
-// $FlowFixMe
-const moment = require.requireActual('moment-timezone');
+const moment = jest.requireActual('moment-timezone');
 jest.doMock('moment', () => {
   moment.tz.setDefault('Europe/Warsaw');
   return moment;
