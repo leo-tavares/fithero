@@ -25,7 +25,6 @@ translate.cache.clear();
 // set i18n-js config
 i18nJS.fallbacks = true;
 i18nJS.translations = {
-  ca: es,
   en,
   es,
 };
