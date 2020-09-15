@@ -17,27 +17,22 @@ import {
   getWorkoutComments,
   setWorkoutComments,
 } from '../../database/services/WorkoutService';
-import HeaderButton from '../../components/HeaderButton';
-import type { NavigationType } from '../../types';
+import HeaderButton from '../../components/Header/HeaderButton';
 import type { ThemeType } from '../../utils/theme/withTheme';
 import Screen from '../../components/Screen';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
+import type { NavigationType } from '../../types';
 
-type NavigationObjectType = {
-  navigation: NavigationType<{
+type RouteType = {
+  params: {
     day: string,
     saveComments: () => void,
-  }>,
-};
-
-type NavigationOptions = NavigationObjectType & {
-  screenProps: {
-    theme: ThemeType,
   },
 };
 
-type Props = NavigationObjectType & {
+type Props = {
   theme: ThemeType,
+  route: RouteType,
+  navigation: NavigationType,
 };
 
 type State = {
@@ -45,33 +40,23 @@ type State = {
 };
 
 class CommentsScreen extends React.Component<Props, State> {
-  static navigationOptions = ({
-    navigation,
-    screenProps,
-  }: NavigationOptions) => {
-    const { params = {} } = navigation.state;
-    return {
-      ...getDefaultNavigationOptions(screenProps.theme),
-      headerRight: (
-        <HeaderButton onPress={params.saveComments}>
-          {i18n.t('save')}
-        </HeaderButton>
-      ),
-    };
-  };
-
   constructor(props: Props) {
     super(props);
     this.state = {
       comments: getWorkoutComments(
-        dateToWorkoutId(this.props.navigation.state.params.day)
+        dateToWorkoutId(this.props.route.params.day)
       ),
     };
   }
 
   componentDidMount() {
-    this.props.navigation.setParams({
-      saveComments: this._saveComments,
+    // TODO use useLayoutEffect like here https://reactnavigation.org/docs/header-buttons/#header-interaction-with-its-screen-component
+    this.props.navigation.setOptions({
+      headerRight: () => (
+        <HeaderButton onPress={this._saveComments}>
+          {i18n.t('save')}
+        </HeaderButton>
+      ),
     });
   }
 
@@ -81,7 +66,7 @@ class CommentsScreen extends React.Component<Props, State> {
 
   _saveComments = () => {
     const { comments } = this.state;
-    const workoutId = dateToWorkoutId(this.props.navigation.state.params.day);
+    const workoutId = dateToWorkoutId(this.props.route.params.day);
 
     if (comments) {
       setWorkoutComments(workoutId, comments);
@@ -96,7 +81,7 @@ class CommentsScreen extends React.Component<Props, State> {
     const { comments } = this.state;
     const { colors } = this.props.theme;
     const dayString = getDatePrettyFormat(
-      this.props.navigation.state.params.day,
+      this.props.route.params.day,
       dateToString(getToday())
     );
 
@@ -122,14 +107,15 @@ class CommentsScreen extends React.Component<Props, State> {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    padding: 16,
+    paddingVertical: 16,
   },
   section: {
     marginBottom: 4,
+    paddingHorizontal: 16,
   },
   textArea: {
     flex: 1,
-    paddingHorizontal: 0,
+    paddingHorizontal: 16,
     paddingTop: 24,
     fontSize: 16,
     textAlignVertical: 'top',

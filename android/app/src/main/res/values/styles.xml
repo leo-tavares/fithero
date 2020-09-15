@@ -4,7 +4,11 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimaryDark">#233656</item>
+        <!-- Mostly used to force cursor color on TextInput -->
         <item name="colorControlActivated">#a6ed8e</item>
+        <!-- Mostly used to force ripple color on native components (like Tabs) -->
+        <!-- Matches Paper dark ripple color -->
+        <item name="colorControlHighlight">#52FFFFFF</item>
         <item name="android:windowBackground">@color/darkBackground</item>
     </style>
 

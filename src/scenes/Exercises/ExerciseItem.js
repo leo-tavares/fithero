@@ -16,11 +16,7 @@ type Props = {
   theme: ThemeType,
 };
 
-class ExerciseItem extends React.Component<Props> {
-  shouldComponentUpdate(nextProps: Props) {
-    return this.props.exercise !== nextProps.exercise;
-  }
-
+class ExerciseItem extends React.PureComponent<Props> {
   _openExerciseDetail = () => {
     this.props.navigate('ExerciseDetails', { id: this.props.exercise.id });
   };
@@ -32,7 +28,7 @@ class ExerciseItem extends React.Component<Props> {
   render() {
     const { exercise, theme } = this.props;
     return (
-      <TouchableRipple onPress={this._toggleCheck}>
+      <TouchableRipple onPress={this._toggleCheck} testID={exercise.id}>
         <View style={styles.itemContainer}>
           <View style={styles.row}>
             <Paragraph

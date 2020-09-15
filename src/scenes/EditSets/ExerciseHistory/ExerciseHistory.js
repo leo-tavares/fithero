@@ -1,10 +1,12 @@
 /* @flow */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
-import { Card, Text } from 'react-native-paper';
+import { VirtualizedList, Platform, StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
+import { useSelector } from 'react-redux';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
-import useRealmResultsHook from '../../../components/useRealmResultsHook';
+import useRealmResultsHook from '../../../hooks/useRealmResultsHook';
 import {
   getExercisesByType,
   getWorkoutExerciseById,
@@ -13,101 +15,151 @@ import type {
   WorkoutExerciseSchemaType,
   WorkoutSetSchemaType,
 } from '../../../database/types';
-import { connect } from 'react-redux';
 import ExerciseHistoryItem from './ExerciseHistoryItem';
 import {
   getMaxRepByType,
   getMaxSetByType,
 } from '../../../database/services/WorkoutSetService';
 import type { DefaultUnitSystemType } from '../../../redux/modules/settings';
-import type { NavigationType } from '../../../types';
 import { dateToString, getToday } from '../../../utils/date';
 import i18n from '../../../utils/i18n';
 import PersonalRecords from './PersonalRecords';
-import { getWeightUnit } from '../../../utils/metrics';
-import { getExerciseSchemaIdFromSet } from '../../../database/utils';
+import {
+  deserializeWorkoutExercise,
+  getExerciseSchemaIdFromSet,
+} from '../../../database/utils';
+import useMaxSetHook from '../../../hooks/useMaxSetHook';
+import { REALM_DEFAULT_DEBOUNCE_VALUE } from '../../../database/constants';
+import Card from '../../../components/Card';
 
-type Props = {
-  type: 'string',
-  defaultUnitSystem: DefaultUnitSystemType,
-  navigation: NavigationType<{
+type RouteType = {
+  params: {
+    day: string,
     exerciseKey: string,
-  }>,
+    exerciseName?: string,
+  },
 };
 
-const ExerciseHistory = (props: Props) => {
-  const type = props.navigation.state.params.exerciseKey;
+// On Android as the tab is always rendered, we gotta do some more optimizations
+const debounceTime =
+  Platform.OS === 'android' ? REALM_DEFAULT_DEBOUNCE_VALUE : 0;
 
-  const [maxSetUnit, setMaxSetUnit] = useState(props.defaultUnitSystem);
-  const [maxRepUnit, setMaxRepUnit] = useState(props.defaultUnitSystem);
-
-  const { data, timestamp } = useRealmResultsHook<WorkoutExerciseSchemaType>(
-    useCallback(() => getExercisesByType(type), [type])
+const ExerciseHistory = () => {
+  const { navigate } = useNavigation();
+  const route: RouteType = useRoute();
+  const type = route.params.exerciseKey;
+  const defaultUnitSystem: DefaultUnitSystemType = useSelector(
+    state => state.settings.defaultUnitSystem
   );
 
-  const {
-    data: maxSets,
-    timestamp: maxSetHasChanged,
-  } = useRealmResultsHook<WorkoutSetSchemaType>(
-    useCallback(() => getMaxSetByType(type), [type])
+  const [maxSetUnit, setMaxSetUnit] = useState(defaultUnitSystem);
+  const [maxRepUnit, setMaxRepUnit] = useState(defaultUnitSystem);
+
+  const { data, timestamp } = useRealmResultsHook<WorkoutExerciseSchemaType>({
+    query: useCallback(() => getExercisesByType(type), [type]),
+    debounceTime,
+  });
+
+  const maxSet: ?WorkoutSetSchemaType = useMaxSetHook(
+    type,
+    getMaxSetByType,
+    debounceTime
   );
-
-  const {
-    data: maxReps,
-    timestamp: maxRepHasChanged,
-  } = useRealmResultsHook<WorkoutSetSchemaType>(
-    useCallback(() => getMaxRepByType(type), [type])
+  const maxRep: ?WorkoutSetSchemaType = useMaxSetHook(
+    type,
+    getMaxRepByType,
+    debounceTime
   );
-
-  // This might not be necessary in the future if we add weight_unit to each Set
-  useEffect(() => {
-    if (maxSets.length > 0) {
-      const data = getWorkoutExerciseById(
-        getExerciseSchemaIdFromSet(maxSets[0].id)
-      );
-      if (data.length > 0) setMaxSetUnit(data[0].weight_unit);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxSetHasChanged, props.defaultUnitSystem]);
-
-  // This might not be necessary in the future if we add weight_unit to each Set
-  useEffect(() => {
-    if (maxReps.length > 0) {
-      const data = getWorkoutExerciseById(
-        getExerciseSchemaIdFromSet(maxReps[0].id)
-      );
-      if (data.length > 0) setMaxRepUnit(data[0].weight_unit);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [maxRepHasChanged, props.defaultUnitSystem]);
 
   const todayString = dateToString(getToday());
-  const maxSetId = maxSets.length > 0 ? maxSets[0].id : null;
-  const maxRepId = maxReps.length > 0 ? maxReps[0].id : null;
+  // $FlowFixMe type it better
+  const maxSetId = maxSet && maxSet.isValid() ? maxSet.id : null;
+  // $FlowFixMe type it better
+  const maxRepId = maxRep && maxRep.isValid() ? maxRep.id : null;
 
-  const maxSet = maxSetId ? maxSets[0] : null;
-  const maxRep = maxRepId ? maxReps[0] : null;
+  const updateWeightUnit = useCallback((setId, setWeightUnit) => {
+    if (!setId) {
+      return;
+    }
+    const data = getWorkoutExerciseById(getExerciseSchemaIdFromSet(setId));
+    if (data.length > 0) {
+      setWeightUnit(data[0].weight_unit);
+    }
+  }, []);
 
-  return (
-    <FlatList
-      data={data}
-      keyExtractor={keyExtractor}
-      contentContainerStyle={styles.container}
-      renderItem={({ item }) => (
-        <Card style={styles.card}>
+  // TODO This might not be necessary in the future if we add weight_unit to each Set
+  useEffect(() => {
+    updateWeightUnit(maxSetId, setMaxSetUnit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxSetId, defaultUnitSystem]);
+
+  // TODO This might not be necessary in the future if we add weight_unit to each Set
+  useEffect(() => {
+    updateWeightUnit(maxRepId, setMaxRepUnit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maxRepId, defaultUnitSystem]);
+
+  const renderItem = useCallback(
+    ({ item }) => {
+      if (!item.isValid()) {
+        return null;
+      }
+      return (
+        <Card
+          style={styles.card}
+          onPress={() => {
+            const { exerciseKey, exerciseName } = route.params;
+            navigate('EditSetsModal', {
+              isModal: true,
+              day: dateToString(item.date),
+              exerciseName,
+              exerciseKey,
+            });
+          }}
+        >
           <ExerciseHistoryItem
-            exercise={item}
-            unit={getWeightUnit(item, props.defaultUnitSystem)}
+            // Deserialize so memo works
+            exercise={deserializeWorkoutExercise(item)}
             maxSetId={maxSetId}
             maxRepId={maxRepId}
             todayString={todayString}
           />
         </Card>
-      )}
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [maxRepId, maxSetId, todayString]
+  );
+
+  const getItem = useCallback((data, index) => {
+    if (data.isValid()) {
+      return data[index].isValid() ? data[index] : null;
+    }
+    return null;
+  }, []);
+
+  const getItemCount = useCallback(data => {
+    if (data.isValid()) {
+      return data.length;
+    }
+    return 0;
+  }, []);
+
+  return (
+    <VirtualizedList
+      data={data}
+      keyExtractor={keyExtractor}
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      renderItem={renderItem}
       extraData={timestamp}
+      initialNumToRender={5}
+      maxToRenderPerBatch={5}
+      windowSize={5}
       ListEmptyComponent={renderEmptyView}
       ListHeaderComponent={
-        maxSet && maxRep ? (
+        // $FlowFixMe type it better
+        maxSet && maxSet.isValid() && maxRep && maxRep.isValid() ? (
           <PersonalRecords
             maxSet={maxSet}
             maxRep={maxRep}
@@ -116,6 +168,8 @@ const ExerciseHistory = (props: Props) => {
           />
         ) : null
       }
+      getItem={getItem}
+      getItemCount={getItemCount}
     />
   );
 };
@@ -130,7 +184,10 @@ const renderEmptyView = () => (
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 4,
+    marginTop: Platform.OS === 'ios' ? 8 : 0,
+  },
+  contentContainer: {
+    paddingTop: Platform.OS === 'ios' ? 0 : 4,
     paddingBottom: 8,
   },
   card: {
@@ -142,9 +199,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default connect(
-  state => ({
-    defaultUnitSystem: state.settings.defaultUnitSystem,
-  }),
-  null
-)(ExerciseHistory);
+export default ExerciseHistory;

@@ -1,5 +1,8 @@
 /* @flow */
 
+import { Platform } from 'react-native';
+import { TransitionPresets } from '@react-navigation/stack';
+
 import type { ThemeType } from './theme/withTheme';
 
 export const getDefaultNavigationOptions = (theme: ThemeType) => ({
@@ -14,4 +17,8 @@ export const getDefaultNavigationOptions = (theme: ThemeType) => ({
   cardStyle: {
     backgroundColor: theme.colors.background,
   },
+  ...(Platform.OS === 'android'
+    ? // TODO Check ScaleFromCenterAndroid if can't make native stack to work
+      TransitionPresets.FadeFromBottomAndroid
+    : undefined),
 });

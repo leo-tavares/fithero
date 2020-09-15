@@ -2,8 +2,8 @@
 
 import React, { Fragment, useEffect, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
-import { FAB, Snackbar } from 'react-native-paper';
-import { NavigationEvents } from 'react-navigation';
+import { FAB, Snackbar, useTheme } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 
 type Props = {
   show: boolean,
@@ -13,6 +13,9 @@ type Props = {
   snackbarText: string,
 };
 
+const animationDuration = 200;
+const useNativeDriver = true;
+
 const FABSnackbar = ({
   show,
   onFabPress,
@@ -20,36 +23,41 @@ const FABSnackbar = ({
   fabIcon,
   snackbarText,
 }: Props) => {
+  const navigation = useNavigation();
   const [fabAnimatedValue] = useState(new Animated.Value(0));
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (!snackbarVisible && show) {
       Animated.timing(fabAnimatedValue, {
         toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
+        duration: animationDuration,
+        useNativeDriver,
       }).start();
       setSnackbarVisible(true);
     } else if (snackbarVisible && !show) {
       Animated.timing(fabAnimatedValue, {
         toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
+        duration: animationDuration,
+        useNativeDriver,
       }).start();
       setSnackbarVisible(false);
     }
   }, [fabAnimatedValue, show, snackbarVisible]);
 
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      if (snackbarVisible) {
+        onDismiss();
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigation, onDismiss, snackbarVisible]);
+
   return (
     <Fragment>
-      <NavigationEvents
-        onWillBlur={() => {
-          if (snackbarVisible) {
-            onDismiss();
-          }
-        }}
-      />
       <FAB
         icon={fabIcon}
         onPress={onFabPress}
@@ -71,6 +79,12 @@ const FABSnackbar = ({
         visible={snackbarVisible}
         onDismiss={onDismiss}
         duration={Snackbar.DURATION_SHORT}
+        theme={{
+          colors: {
+            onSurface: colors.snackBarBackground,
+            surface: colors.snackBarText,
+          },
+        }}
       >
         {snackbarText}
       </Snackbar>

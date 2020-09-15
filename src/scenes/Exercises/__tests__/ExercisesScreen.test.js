@@ -1,12 +1,13 @@
 /* @flow */
 
 import React from 'react';
-import { shallow } from 'enzyme';
 import { Keyboard } from 'react-native';
-import { exercises } from 'dziku-exercises';
+import { render, fireEvent } from 'react-native-testing-library';
+import { exercises } from 'fithero-exercises';
 
-import { ExercisesScreen } from '../ExercisesScreen';
-import theme from '../../../utils/theme';
+import ExercisesScreen from '../';
+import { ThemeProvider } from 'react-native-paper';
+import { defaultTheme } from '../../../utils/theme';
 
 class RealmResults extends Array<*> {
   addListener = jest.fn();
@@ -17,8 +18,16 @@ const mockRealmResults = new RealmResults();
 const mockRealmRecentResults = new RealmResults();
 mockRealmRecentResults.push({ type: 'bench-press' }, { type: 'barbell-squat' });
 
-jest.mock('Platform', () => ({ OS: 'android', select: jest.fn() }));
-jest.mock('Keyboard');
+jest.mock('react-native/Libraries/Utilities/Platform', () => {
+  const realPlatform = jest.requireActual(
+    'react-native/Libraries/Utilities/Platform'
+  );
+  return {
+    ...realPlatform,
+    OS: 'android',
+  };
+});
+jest.mock('react-native/Libraries/Components/Keyboard/Keyboard');
 jest.mock('../../../database/services/ExerciseService', () => ({
   getAllExercises: () => mockRealmResults,
 }));
@@ -27,70 +36,66 @@ jest.mock('../../../database/services/WorkoutExerciseService', () => ({
 }));
 
 describe('ExercisesScreen', () => {
-  const wrapper = shallow(
-    <ExercisesScreen
-      navigation={{
-        addListener: jest.fn(),
-        state: { params: { day: '21/10/2018' } },
-        goBack: jest.fn(),
-        setParams: jest.fn(),
-        navigate: jest.fn(),
-        push: jest.fn(),
-        dispatch: jest.fn(),
-      }}
-      theme={theme}
-    />
-  );
-  const List = wrapper.find('SectionList');
-
-  const state = wrapper.state();
-  const createState = (searchQuery, tagSelection) => ({
-    ...state,
-    ...{
-      searchQuery,
-      tagSelection: {
-        ...state.tagSelection,
-        ...tagSelection,
-      },
-    },
-  });
+  const _render = () =>
+    render(
+      <ThemeProvider theme={defaultTheme}>
+        <ExercisesScreen
+          navigation={{
+            addListener: jest.fn(),
+            goBack: jest.fn(),
+            setOptions: jest.fn(),
+            navigate: jest.fn(),
+            push: jest.fn(),
+            dispatch: jest.fn(),
+          }}
+          route={{
+            params: { day: '2019-03-30' },
+          }}
+        />
+      </ThemeProvider>
+    );
 
   it('shows all exercises if no filters', () => {
-    expect(List.props().sections[0].data[0]).toEqual(
+    const { getByTestId } = _render();
+    const exercisesList = getByTestId('exercisesList');
+
+    expect(exercisesList.props.sections[0].data[0]).toEqual(
       expect.objectContaining({ id: 'barbell-squat' })
     );
-    expect(List.props().sections[0].data[1]).toEqual(
+    expect(exercisesList.props.sections[0].data[1]).toEqual(
       expect.objectContaining({ id: 'bench-press' })
     );
-    expect(List.props().sections[1].data).toHaveLength(exercises.length);
+    expect(exercisesList.props.sections[1].data).toHaveLength(exercises.length);
   });
 
   it('filters by search query', () => {
-    const data = wrapper
-      .instance()
-      ._getData(exercises, 'Barbell Squat', wrapper.state().tagSelection);
+    const { getByTestId } = _render();
 
+    fireEvent.changeText(getByTestId('searchExercisesBar'), 'Barbell squat');
+
+    const exercisesList = getByTestId('exercisesList');
+    const data = exercisesList.props.sections[1].data;
     expect(data.find(e => e.id === 'barbell-squat')).toBeDefined();
   });
 
   it('filters by tag', () => {
-    const newState = createState('', { core: true });
+    const { getByTestId } = _render();
 
-    const data = wrapper
-      .instance()
-      ._getData(exercises, newState.searchQuery, newState.tagSelection);
+    fireEvent.press(getByTestId('core'));
+
     const filteredExercises = exercises.filter(e => e.primary[0] === 'abs');
 
+    const data = getByTestId('exercisesList').props.sections[1].data;
     expect(data).toEqual(filteredExercises);
   });
 
   it('filters by search and tag - match', () => {
-    const newState = createState('Air bike', { core: true });
+    const { getByTestId } = _render();
 
-    const data = wrapper
-      .instance()
-      ._getData(exercises, newState.searchQuery, newState.tagSelection);
+    fireEvent.press(getByTestId('core'));
+    fireEvent.changeText(getByTestId('searchExercisesBar'), 'Air bike');
 
+    const data = getByTestId('exercisesList').props.sections[1].data;
     expect(data).toEqual([
       expect.objectContaining({
         id: 'air-bike',
@@ -101,30 +106,33 @@ describe('ExercisesScreen', () => {
   });
 
   it('filters by search and tag - no match', () => {
-    const newState = createState('Air bike', { legs: true });
+    const { getByTestId } = _render();
 
-    const data = wrapper
-      .instance()
-      ._getData(exercises, newState.searchQuery, newState.tagSelection);
+    fireEvent.press(getByTestId('legs'));
+    fireEvent.changeText(getByTestId('searchExercisesBar'), 'Air bike');
 
+    const data = getByTestId('exercisesList').props.sections[1].data;
     expect(data).toEqual([]);
   });
 
   it('filters by search escaping special characters', () => {
-    const newState = createState('Bench Press: Barbell (Decline)', {});
+    const { getByTestId } = _render();
 
-    const data = wrapper
-      .instance()
-      ._getData(exercises, newState.searchQuery, newState.tagSelection);
+    fireEvent.changeText(
+      getByTestId('searchExercisesBar'),
+      'Bench Press: Barbell (Decline)'
+    );
 
+    const data = getByTestId('exercisesList').props.sections[1].data;
     expect(
       data.find(e => e.id === 'decline-barbell-bench-press')
     ).toBeDefined();
   });
 
   it('pushes a new screen when clicking an exercise and dismiss the keyboard', () => {
+    const { getByTestId } = _render();
     expect(Keyboard.dismiss).not.toHaveBeenCalled();
-    wrapper.instance()._onExercisePress('bench-press');
+    fireEvent.press(getByTestId('bench-press'));
     expect(Keyboard.dismiss).toHaveBeenCalled();
   });
 });

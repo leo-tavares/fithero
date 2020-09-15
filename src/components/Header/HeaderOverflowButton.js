@@ -9,14 +9,18 @@ import {
 } from 'react-native';
 
 import HeaderIconButton from './HeaderIconButton';
-import i18n from '../utils/i18n';
+import i18n from '../../utils/i18n';
 
-type Props = {
+export type HeaderOverflowButtonProps = {|
   actions: Array<string>,
-  onPress: (index: number) => void,
   destructiveButtonIndex?: number,
   last?: boolean,
-};
+|};
+
+type Props = {|
+  ...HeaderOverflowButtonProps,
+  onPress: (index: number) => mixed,
+|};
 
 class HeaderOverflowButton extends React.Component<Props> {
   menuRef: ?HeaderIconButton;
@@ -29,6 +33,7 @@ class HeaderOverflowButton extends React.Component<Props> {
         () => {},
         (action, index) => {
           if (action === 'itemSelected') {
+            // $FlowFixMe
             this.props.onPress(index);
           }
         }
@@ -56,7 +61,7 @@ class HeaderOverflowButton extends React.Component<Props> {
           this.menuRef = r;
         }}
         onPress={this._onPress}
-        icon={Platform.OS === 'ios' ? 'more-horiz' : 'more-vert'}
+        icon={Platform.OS === 'ios' ? 'more-horiz' : 'dots-vertical'}
         last={this.props.last}
       />
     );

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Platform, StatusBar, YellowBox } from 'react-native';
 import { Provider } from 'react-redux';
 import AsyncStorage from '@react-native-community/async-storage';
+import SafeAreaProvider from './components/SafeAreaProvider';
 
 import store from './redux/configureStore';
 import MainNavigator from './MainNavigator';
@@ -26,17 +27,17 @@ if (global.__DEV__) {
     // https://github.com/facebook/react-native/issues/18201
     'Warning: Class RCTCxxModule was not exported',
     // Comes from react-navigation
-    'Async Storage has been extracted',
+    'Warning: AsyncStorage has been extracted',
+    '-[RCTRootView cancelTouches]` is deprecated and will be deleted soon.',
     // Comes from react-native-tabbed-view-pager-android
     'Accessing view manager configs directly off UIManager',
     // Comes from some libraries too
     'componentWillReceiveProps is deprecated',
+    'Warning: componentWillReceiveProps has been renamed',
+    // Moment deprecation
+    'Deprecation warning: use moment.updateLocale',
   ]);
 }
-
-const navigationPersistenceKey = global.__DEV__
-  ? 'DEV_fithero-navigation-key'
-  : null;
 
 type State = {
   loading: boolean,
@@ -93,14 +94,11 @@ export default class App extends React.Component<{}, State> {
       <Provider store={store}>
         {Platform.OS === 'ios' && <StatusBar barStyle="light-content" />}
         {!this.state.loading && (
-          <PaperThemeProvider
-            render={appTheme => (
-              <MainNavigator
-                persistenceKey={navigationPersistenceKey}
-                screenProps={{ theme: appTheme }}
-              />
-            )}
-          />
+          <PaperThemeProvider>
+            <SafeAreaProvider>
+              <MainNavigator />
+            </SafeAreaProvider>
+          </PaperThemeProvider>
         )}
       </Provider>
     );

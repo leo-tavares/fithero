@@ -33,6 +33,7 @@ class ChipFilterItem extends React.PureComponent<Props> {
         onPress={this._onSelect}
         selected={selected}
         style={[styles.chip, { backgroundColor }]}
+        testID={item.id}
       >
         {item.name}
       </Chip>

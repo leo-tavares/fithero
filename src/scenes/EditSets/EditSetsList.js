@@ -1,69 +1,90 @@
 /* @flow */
 
-import React from 'react';
-import { FlatList, StyleSheet } from 'react-native';
+import React, { useCallback, useState, memo } from 'react';
+import { FlatList, View, StyleSheet } from 'react-native';
 import { Divider } from 'react-native-paper';
 
-import type { WorkoutExerciseSchemaType } from '../../database/types';
+import type {
+  WorkoutExerciseSchemaType,
+  WorkoutSetSchemaType,
+} from '../../database/types';
 import EditSetItem from './EditSetItem';
 import type { DefaultUnitSystemType } from '../../redux/modules/settings';
-import useMaxSetsHook from '../../components/useMaxSetsHook';
+import useKeyboard from '../../hooks/useKeyboard';
+import useMaxSetHook from '../../hooks/useMaxSetHook';
+import {
+  getMaxRepByType,
+  getMaxSetByType,
+} from '../../database/services/WorkoutSetService';
+import { REALM_DEFAULT_DEBOUNCE_VALUE } from '../../database/constants';
 
-type Props = {
+type Props = {|
   exercise: ?WorkoutExerciseSchemaType,
   unit: DefaultUnitSystemType,
   selectedId: string,
   onPressItem: (setId: string) => void,
-};
+  type: string,
+|};
 
 const EditSetsList = (props: Props) => {
-  const { exercise, unit, onPressItem, selectedId } = props;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const { exercise, unit, onPressItem, selectedId, type } = props;
+  const data = exercise ? exercise.sets : [];
 
-  const [maxSets, maxReps] = useMaxSetsHook(exercise);
-  const maxSetId = maxSets.length > 0 ? maxSets[0].id : null;
-  const maxRepId = maxReps.length > 0 ? maxReps[0].id : null;
+  const keyboardCallback = useCallback(height => {
+    setKeyboardHeight(height > 0 ? height : 0);
+  }, []);
 
-  return (
-    <FlatList
-      contentContainerStyle={styles.list}
-      // It's possible that we delete the whole exercise so this access to .sets would be invalid
-      data={exercise && exercise.isValid() ? exercise.sets : []}
-      keyExtractor={item => item.id}
-      renderItem={propsData =>
-        _renderItem(
-          propsData,
-          unit,
-          selectedId,
-          onPressItem,
-          maxSetId,
-          maxRepId
-        )
-      }
-      keyboardShouldPersistTaps="always"
-      ItemSeparatorComponent={() => <Divider />}
-    />
+  useKeyboard(keyboardCallback);
+
+  const maxSet: ?WorkoutSetSchemaType = useMaxSetHook(
+    type,
+    getMaxSetByType,
+    REALM_DEFAULT_DEBOUNCE_VALUE
   );
-};
+  const maxRep: ?WorkoutSetSchemaType = useMaxSetHook(
+    type,
+    getMaxRepByType,
+    REALM_DEFAULT_DEBOUNCE_VALUE
+  );
 
-const _renderItem = (
-  { item, index },
-  unit,
-  selectedId,
-  onPressItem,
-  maxSetId,
-  maxRepId
-) => {
-  const maxSetType =
-    maxSetId === item.id ? 'maxSet' : maxRepId === item.id ? 'maxRep' : null;
+  const maxSetId = maxSet ? maxSet.id : null;
+  const maxRepId = maxRep ? maxRep.id : null;
+
+  const renderItem = useCallback(
+    ({ item, index }) => {
+      const maxSetType =
+        maxSetId === item.id
+          ? 'maxSet'
+          : maxRepId === item.id
+          ? 'maxRep'
+          : null;
+      return (
+        <EditSetItem
+          set={item}
+          index={index + 1}
+          isSelected={selectedId === item.id}
+          maxSetType={maxSetType}
+          onPressItem={onPressItem}
+          unit={unit}
+        />
+      );
+    },
+    [maxRepId, maxSetId, onPressItem, selectedId, unit]
+  );
+
   return (
-    <EditSetItem
-      set={item}
-      index={index + 1}
-      isSelected={selectedId === item.id}
-      maxSetType={maxSetType}
-      onPressItem={onPressItem}
-      unit={unit}
-    />
+    <>
+      <FlatList
+        contentContainerStyle={styles.list}
+        data={data}
+        keyExtractor={item => item.id}
+        renderItem={renderItem}
+        keyboardShouldPersistTaps="handled"
+        ItemSeparatorComponent={() => <Divider />}
+      />
+      <View style={{ height: keyboardHeight }} />
+    </>
   );
 };
 
@@ -73,4 +94,18 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditSetsList;
+export default memo<Props>(EditSetsList, (prevProps, nextProps) => {
+  if (
+    prevProps.selectedId !== nextProps.selectedId ||
+    prevProps.onPressItem !== nextProps.onPressItem ||
+    prevProps.type !== nextProps.type ||
+    prevProps.unit !== nextProps.unit
+  ) {
+    return false;
+  }
+
+  return (
+    // Doing it like this because of Realm
+    JSON.stringify(prevProps.exercise) === JSON.stringify(nextProps.exercise)
+  );
+});

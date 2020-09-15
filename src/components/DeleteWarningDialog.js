@@ -38,8 +38,26 @@ class DeleteWarningDialog extends React.Component<Props> {
             <Paragraph>{description}</Paragraph>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={onDismiss}>{i18n.t('cancel')}</Button>
-            <Button onPress={onConfirm}>{i18n.t('delete')}</Button>
+            <Button
+              onPress={onDismiss}
+              theme={{
+                colors: {
+                  primary: colors.accent,
+                },
+              }}
+            >
+              {i18n.t('cancel')}
+            </Button>
+            <Button
+              onPress={onConfirm}
+              theme={{
+                colors: {
+                  primary: colors.accent,
+                },
+              }}
+            >
+              {i18n.t('delete')}
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

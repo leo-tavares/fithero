@@ -1,72 +1,75 @@
 /* @flow */
 
-import React, { Component } from 'react';
-import { Platform, StyleSheet } from 'react-native';
-import { connect } from 'react-redux';
+import React, { useCallback } from 'react';
+import { StyleSheet } from 'react-native';
+import { Text } from 'react-native-paper';
+import { useSelector } from 'react-redux';
+import { useRoute } from '@react-navigation/native';
 
 import Screen from '../../components/Screen';
-import type { NavigationType } from '../../types';
-import type { WorkoutExerciseSchemaType } from '../../database/types';
 import { getExerciseSchemaId } from '../../database/utils';
 import EditSetsWithControls from './EditSetsWithControls';
 import type { DefaultUnitSystemType } from '../../redux/modules/settings';
 import { getWorkoutExerciseById } from '../../database/services/WorkoutExerciseService';
-import DataProvider from '../../components/DataProvider';
+import useRealmResultsHook from '../../hooks/useRealmResultsHook';
+import type { WorkoutExerciseSchemaType } from '../../database/types';
+import { getExerciseName } from '../../utils/exercises';
 
-type Props = {
-  navigation: NavigationType<{
+type RouteType = {
+  params: {
     day: string,
     exerciseKey: string,
-  }>,
-  defaultUnitSystem: DefaultUnitSystemType,
+    exerciseName?: string,
+    isModal?: boolean,
+  },
 };
 
-class EditSetsScreen extends Component<Props> {
-  render() {
-    const { defaultUnitSystem } = this.props;
-    const { day, exerciseKey } = this.props.navigation.state.params;
+type Props = {
+  selectedPage?: number,
+};
 
-    const id = getExerciseSchemaId(day, exerciseKey);
+const EditSetsScreen = (props: Props) => {
+  const route: RouteType = useRoute();
+  const { day, exerciseKey, exerciseName, isModal } = route.params;
+  const { selectedPage } = props;
+  const defaultUnitSystem: DefaultUnitSystemType = useSelector(
+    state => state.settings.defaultUnitSystem
+  );
 
-    return (
-      <Screen style={styles.container}>
-        <DataProvider
-          query={getWorkoutExerciseById}
-          args={[id]}
-          parse={(data: Array<WorkoutExerciseSchemaType>) =>
-            data.length > 0 ? data[0] : null
-          }
-          render={(exercise: ?WorkoutExerciseSchemaType) => (
-            <EditSetsWithControls
-              testID="edit-sets-with-controls"
-              day={day}
-              exerciseKey={exerciseKey}
-              exercise={exercise}
-              defaultUnitSystem={defaultUnitSystem}
-            />
-          )}
-        />
-      </Screen>
-    );
-  }
-}
+  const id = getExerciseSchemaId(day, exerciseKey);
+  const { data } = useRealmResultsHook<WorkoutExerciseSchemaType>({
+    query: useCallback(() => getWorkoutExerciseById(id), [id]),
+  });
+  const exercise = data.length > 0 ? data[0] : null;
+
+  return (
+    <Screen style={styles.container}>
+      {isModal && (
+        <Text style={styles.title}>
+          {getExerciseName(exerciseKey, exerciseName)}
+        </Text>
+      )}
+      <EditSetsWithControls
+        testID="edit-sets-with-controls"
+        day={day}
+        exerciseKey={exerciseKey}
+        exercise={exercise}
+        defaultUnitSystem={defaultUnitSystem}
+        selectedPage={selectedPage}
+      />
+    </Screen>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
-    ...Platform.select({
-      ios: {
-        paddingVertical: 8,
-      },
-      android: {
-        paddingTop: 8,
-      },
-    }),
+    paddingTop: 8,
+  },
+  title: {
+    fontSize: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
 });
 
-export default connect(
-  state => ({
-    defaultUnitSystem: state.settings.defaultUnitSystem,
-  }),
-  null
-)(EditSetsScreen);
+export default EditSetsScreen;

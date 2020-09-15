@@ -1,8 +1,9 @@
 package com.fnp.fithero;
 
+import android.animation.Animator;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.view.animation.AnimationUtils;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
@@ -15,7 +16,8 @@ import javax.annotation.Nullable;
 public class MainActivity extends ReactActivity {
 
   static String currentLocale;
-  private @Nullable ReactRootView mReactRootView;
+  private @Nullable
+  ReactRootView mReactRootView;
 
   /**
    * Returns the name of the main component registered from JavaScript.
@@ -28,9 +30,7 @@ public class MainActivity extends ReactActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-    setTheme(R.style.AppTheme);
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_main);
     MainActivity.currentLocale = getResources().getConfiguration().locale.toString();
   }
 
@@ -70,8 +70,33 @@ public class MainActivity extends ReactActivity {
 
   public void switchToReactView() {
     if (mReactRootView != null && !mReactRootView.isAttachedToWindow()) {
-      mReactRootView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
-      setContentView(mReactRootView);
+      mReactRootView.setAlpha(0f);
+      mReactRootView.animate()
+          .alpha(1f)
+          .setInterpolator(new AccelerateDecelerateInterpolator())
+          .setDuration(350)
+          .setListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+              setContentView(mReactRootView);
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+              setTheme(R.style.AppTheme);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+          })
+          .start();
     }
   }
 

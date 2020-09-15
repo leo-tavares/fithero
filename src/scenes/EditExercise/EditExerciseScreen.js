@@ -13,24 +13,19 @@ import {
   editExercise,
   getExerciseById,
 } from '../../database/services/ExerciseService';
-import HeaderButton from '../../components/HeaderButton';
-import HeaderIconButton from '../../components/HeaderIconButton';
+import HeaderButton from '../../components/Header/HeaderButton';
 import type { NavigationType } from '../../types';
 import Screen from '../../components/Screen';
-import { getDefaultNavigationOptions } from '../../utils/navigation';
 
 type NavigationObjectType = {
-  navigation: NavigationType<{ id?: string, onSave: () => void }>,
-};
-
-type NavigationOptions = NavigationObjectType & {
-  screenProps: {
-    theme: ThemeType,
-  },
+  navigation: NavigationType,
 };
 
 type Props = NavigationObjectType & {
   theme: ThemeType,
+  route: {
+    params: { id?: string, onSave: () => void },
+  },
 };
 
 type State = {
@@ -41,26 +36,9 @@ type State = {
 };
 
 export class EditExerciseScreen extends React.Component<Props, State> {
-  static navigationOptions = ({
-    navigation,
-    screenProps,
-  }: NavigationOptions) => {
-    const { params = {} } = navigation.state;
-    return {
-      ...getDefaultNavigationOptions(screenProps.theme),
-      title: params.id ? i18n.t('edit_exercise') : i18n.t('new_exercise'),
-      headerLeft: (
-        <HeaderIconButton icon="close" onPress={() => navigation.goBack()} />
-      ),
-      headerRight: (
-        <HeaderButton onPress={params.onSave}>{i18n.t('save')}</HeaderButton>
-      ),
-    };
-  };
-
   constructor(props: Props) {
     super(props);
-    const { params = {} } = props.navigation.state;
+    const { params = {} } = props.route;
     const { id } = params;
 
     const exercise = id ? getExerciseById(id)[0] : null;
@@ -72,8 +50,11 @@ export class EditExerciseScreen extends React.Component<Props, State> {
       saveWasPressed: false,
     };
 
-    props.navigation.setParams({
-      onSave: this._onSave,
+    // TODO use useLayoutEffect like here https://reactnavigation.org/docs/header-buttons/#header-interaction-with-its-screen-component
+    props.navigation.setOptions({
+      headerRight: () => (
+        <HeaderButton onPress={this._onSave}>{i18n.t('save')}</HeaderButton>
+      ),
     });
   }
 
@@ -88,7 +69,7 @@ export class EditExerciseScreen extends React.Component<Props, State> {
         secondary: [],
       };
 
-      const { params = {} } = this.props.navigation.state;
+      const { params = {} } = this.props.route;
       if (params.id) {
         editExercise({ id: params.id, ...exerciseForDb });
       } else {
